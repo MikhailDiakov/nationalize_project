@@ -1,0 +1,76 @@
+version: "3.8"
+
+x-environment-defaults: &environment-defaults
+  SECRET_KEY: "${SECRET_KEY}"
+  DEBUG: "True"
+  DB_NAME: "${DB_NAME}"
+  DB_USER: "${DB_USER}"
+  DB_PASSWORD: "${DB_PASSWORD}"
+  DB_PORT: 5432
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_USER: "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    restart: on-failure:5
+    networks:
+      - api-network
+
+  service:
+    build:
+      context: ./nationalize_project
+    volumes:
+      - ./nationalize_project:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      <<: *environment-defaults
+      DB_HOST: db
+    restart: on-failure:5
+    networks:
+      - api-network
+  test:
+    build:
+      context: ./nationalize_project
+    volumes:
+      - ./nationalize_project:/app
+    depends_on:
+      - db
+    environment:
+      <<: *environment-defaults
+      DB_HOST: db
+    command: ["pytest", "--maxfail=1", "--disable-warnings", "-v"]
+    profiles:
+      - test
+    networks:
+      - api-network
+    restart: "no"
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - static_volume:/app/staticfiles
+      - ./conf/nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - service
+    networks:
+      - api-network
+    restart: on-failure:5
+
+volumes:
+  postgres_data:
+  static_volume:
+
+networks:
+  api-network:
+    driver: bridge
