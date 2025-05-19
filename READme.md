@@ -24,18 +24,18 @@ docker-compose up -d
 
 Access the API documentation at: [http://localhost/api/docs/#/](http://localhost/api/docs/#/)
 
----
 
-### 📦 What's inside the .env.example file?
+## 📦 What's inside the .env.example file?
 
 The .env.example file contains all essential environment variables with clear explanations of what each setting does — from Django’s secret key and debug mode, to database connection details like host, port, user, and password.
 
 Make sure to review it and set your own values before running the project!
 
-### Testing
+## Testing
 
 - **Pytest**:
   ```
   docker-compose --profile test up
   ```
   or in the docker container.
+---
